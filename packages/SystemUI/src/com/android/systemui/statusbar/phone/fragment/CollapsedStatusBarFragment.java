@@ -449,6 +449,7 @@ public class CollapsedStatusBarFragment extends Fragment implements CommandQueue
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        mClockController.removeTunable();
         mStatusBarIconController.removeIconGroup(mDarkIconManager);
         mCarrierConfigTracker.removeCallback(mCarrierConfigCallback);
         mCarrierConfigTracker.removeDataSubscriptionChangedListener(mDefaultDataListener);
