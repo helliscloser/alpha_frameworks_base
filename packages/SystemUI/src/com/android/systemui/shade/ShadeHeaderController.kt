@@ -110,7 +110,7 @@ constructor(
     private val activityStarter: ActivityStarter,
     private val statusOverlayHoverListenerFactory: StatusOverlayHoverListenerFactory,
     private val tunerService: TunerService,
-) : ViewController<View>(header), Dumpable {
+) : ViewController<View>(header), Dumpable, TunerService.Tunable {
 
     companion object {
         /** IDs for transitions and constraints for the [MotionLayout]. */
@@ -359,29 +359,6 @@ constructor(
             shadeCarrierGroupControllerBuilder.setShadeCarrierGroup(mShadeCarrierGroup).build()
 
         privacyIconsController.onParentVisible()
-
-        tunerService.addTunable(object : TunerService.Tunable {
-            override fun onTuningChanged(key: String?, value: String?) {
-                qsBatteryStyle = TunerService.parseInteger(value, -1)
-                updateQsBatteryStyle()
-            }
-        }, QS_BATTERY_STYLE)
-
-        tunerService.addTunable(object : TunerService.Tunable {
-            override fun onTuningChanged(key: String?, value: String?) {
-                batteryStyle = TunerService.parseInteger(value, 0)
-                updateQsBatteryStyle()
-            }
-        }, STATUS_BAR_BATTERY_STYLE)
-
-        tunerService.addTunable(object : TunerService.Tunable {
-            override fun onTuningChanged(key: String?, value: String?) {
-                qsBatteryPercent = TunerService.parseInteger(value, 2)
-                updateQsBatteryStyle()
-            }
-        }, QS_SHOW_BATTERY_PERCENT)
-
-        updateQsBatteryStyle()
     }
 
     override fun onViewAttached() {
@@ -415,6 +392,12 @@ constructor(
         systemIconsHoverContainer.setOnHoverListener(
             statusOverlayHoverListenerFactory.createListener(systemIconsHoverContainer)
         )
+
+        updateQsBatteryStyle()
+
+        tunerService.addTunable(this, QS_BATTERY_STYLE)
+        tunerService.addTunable(this, STATUS_BAR_BATTERY_STYLE)
+        tunerService.addTunable(this, QS_SHOW_BATTERY_PERCENT)
     }
 
     override fun onViewDetached() {
@@ -426,6 +409,28 @@ constructor(
         statusBarIconController.removeIconGroup(iconManager)
         nextAlarmController.removeCallback(nextAlarmCallback)
         systemIconsHoverContainer.setOnHoverListener(null)
+        tunerService.removeTunable(this)
+    }
+
+    override fun onTuningChanged(key: String?, value: String?) {
+        when (key) {
+            QS_BATTERY_STYLE -> {
+                qsBatteryStyle = TunerService.parseInteger(value, -1)
+                updateQsBatteryStyle()
+            }
+
+            STATUS_BAR_BATTERY_STYLE -> {
+                batteryStyle = TunerService.parseInteger(value, 0)
+                updateQsBatteryStyle()
+            }
+
+            QS_SHOW_BATTERY_PERCENT -> {
+                qsBatteryPercent = TunerService.parseInteger(value, 2)
+                updateQsBatteryStyle()
+            }
+
+            else -> return
+        }
     }
 
     fun disable(state1: Int, state2: Int, animate: Boolean) {
